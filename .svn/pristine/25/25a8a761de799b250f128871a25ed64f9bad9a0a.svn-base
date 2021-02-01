@@ -1,0 +1,44 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class CameraMove : MonoBehaviour
+{
+    private Rigidbody cameraRig;
+    private GameObject Player;
+    public float Horizontal;
+    public float Vertical;
+
+    private void Start()
+    {
+        cameraRig = gameObject.GetComponent<Rigidbody>();
+    }
+    void Update()
+    {
+        Player = GameObject.Find("Slem");
+        if (Player.transform.position.x - transform.position.x > Horizontal)
+        {
+            cameraRig.velocity = Player.GetComponent<Rigidbody2D>().velocity;
+        }
+        if(Player.transform.position.x - transform.position.x<Horizontal&& Player.transform.position.x - transform.position.x > -Horizontal)
+        {
+            cameraRig.velocity = Vector3.zero;
+        }
+        if(Player.transform.position.x - transform.position.x < -Horizontal)
+        {
+            cameraRig.velocity = Player.GetComponent<Rigidbody2D>().velocity;
+        }
+        if (Player.transform.position.y - transform.position.y > Vertical)
+        {
+            cameraRig.velocity = new Vector3(0, Player.GetComponent<PlayerMove>().JumpHigh, 0);
+        }
+        if(Player.transform.position.y - transform.position.y>Vertical&& Player.transform.position.y - transform.position.y < -Vertical)
+        {
+            cameraRig.velocity = Vector3.zero;
+        }
+        if(Player.transform.position.y - transform.position.y < -Vertical)
+        {
+            cameraRig.velocity= new Vector3(0,-Player.GetComponent<PlayerMove>().JumpHigh, 0);
+        }
+    }
+}

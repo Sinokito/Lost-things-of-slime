@@ -1,0 +1,56 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Events;
+
+public class DoorScript : MonoBehaviour
+{
+    public Animator anim;
+    private int one = 0;
+    private int two = 0;
+    private int three = 0;
+    // Start is called before the first frame update
+    void Start()
+    {
+        UnityAction<object> ColiDoor1 = null;
+        ColiDoor1 += OneSet;
+        EventCenter.GetInstance().AddEventListener("OppenDoor1", ColiDoor1);
+        UnityAction<object> ColiDoor2 = null;
+        ColiDoor2 += TwoSet;
+        EventCenter.GetInstance().AddEventListener("OppenDoor2", ColiDoor2);
+        UnityAction<object> ColiDoor3 = null;
+        ColiDoor3 += ThreeSet;
+        EventCenter.GetInstance().AddEventListener("OppenDoor3", ColiDoor3);
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (one == 1 && two == 2 && three == 3)
+        {
+            anim.SetBool("BDoor",true);
+            Debug.Log(one);
+            Debug.Log(two);
+            Debug.Log(three);
+        }
+    }
+     void OneSet(object info)
+    {
+        one = 1;
+    }
+    void TwoSet(object info)
+    {
+        if (one == 1)
+        {
+            two = 2;
+        }
+    }
+    void ThreeSet(object info)
+    {
+        if (one == 1 && two == 2)
+        {
+            three = 3;
+        }
+    }
+
+}

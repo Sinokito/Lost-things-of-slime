@@ -1,0 +1,43 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class FallStone : MonoBehaviour
+{
+    Vector3 start;
+    public double limt;
+    public Animator anim;
+    // Start is called before the first frame update
+    void Start()
+    {
+        start = gameObject.transform.position;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        //石头过低重置
+        if (gameObject.transform.position.y < limt)
+        {
+            gameObject.transform.position = start;
+            gameObject.GetComponent<Rigidbody2D>().velocity = Vector3.zero;
+        }
+    }
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        //碰到玩家杀死玩家
+        if (collision.rigidbody.tag == "player")
+        {
+            anim.SetBool("isDeath", true);
+            collision.gameObject.GetComponent<PlayerMove>().Speed = 0;
+            collision.gameObject.GetComponent<PlayerMove>().JumpHigh = 0;
+
+            Invoke("reset", 1);
+        }
+    }
+    private void reset()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+}

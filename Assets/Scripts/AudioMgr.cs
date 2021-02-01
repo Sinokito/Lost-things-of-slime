@@ -1,0 +1,208 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+/// <summary>
+/// @author:BkB
+/// @time:2021/1/26
+/// @作用:实现音效管理
+/// 
+/// </summary>
+public class AudioMgr : MonoBehaviour
+{
+    //单例模式 :open
+    static AudioMgr _instance;
+    //所有音效节点的根节点
+    static GameObject sound_source_root;
+    //音效节点字典
+    //url ---> source
+    static Dictionary<string, AudioSource> sourceDic = null;
+    //是否静音
+    static bool _isMute = false;
+    //音量大小
+    private float Volume = 1.0f;
+
+    // Start is called before the first frame update
+
+    private void Awake()
+    {
+        //创建所有音效节点的根节点
+        sound_source_root = new GameObject("sound_source_root");
+        sound_scan sc = sound_source_root.AddComponent<sound_scan>();//添加sound_scan脚本
+        sc.setAudioMgr(this);//为sound_scan脚本中的AudioMgr赋值
+        DontDestroyOnLoad(sound_source_root);
+        _instance = this;
+        DontDestroyOnLoad(this);
+    }
+
+    void Start()
+    {
+
+        initialize();
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        
+    }
+    //初始化
+    void initialize()
+    {
+        //初始化音效节点字典
+        sourceDic = new Dictionary<string, AudioSource>();
+    }
+
+    //实例接口
+    public static AudioMgr getinstance()
+    {
+        return _instance;
+    }
+
+
+
+
+    //播放指定音效
+    public void audioPlay(string url,bool isloop = false)
+    {
+        //基础加载过程
+        AudioSource audio_source = null;//它用来接收音效节点的AudioSource组件
+        //判断source字典是否已经包含它
+        if(sourceDic.ContainsKey(url))
+        {
+            audio_source = sourceDic[url];//是的话就直接赋值
+        }
+        else
+        {   //不是的话，还要创建
+            GameObject s = new GameObject(url);//创建该clip专用节点
+            s.transform.parent = sound_source_root.transform;//设置该节点父对象为所有音效节点的根节点——sound_source_root
+            audio_source = s.AddComponent<AudioSource>();//为该节点添加AudioSource组件
+
+            //音效加载过程
+            AudioClip clip = Resources.Load<AudioClip>("Audio/" + url);//找到并加载对应的clip
+            audio_source.clip = clip;//为该节点的AudioSOurce组件中的AudioClip赋值
+            audio_source.playOnAwake = true;
+            audio_source.spatialBlend = 0.0f;//设置为2D声音
+            sourceDic.Add(url, audio_source);
+        }
+
+
+        //音效效果判断过程
+        /* 是否循环
+         * 是否静音
+         * 音量大小
+         * */
+        audio_source.mute = _isMute;
+        audio_source.volume = Volume;
+        audio_source.loop = isloop;
+
+
+        //播放过程
+        audio_source.enabled = true;//激活那些  已经播放完  而关闭的节点
+        audio_source.Play();
+
+    }
+    //停止播放指定音效
+    public void audioStop(string url)
+    {
+        AudioSource audio_source = null;
+        if (!sourceDic.ContainsKey(url))//判断是否已经在音效表里面了
+        {
+            return;//没有这个背景音乐就直接返回
+        }
+        audio_source = sourceDic[url];//有就把audio_source直接赋值过去
+        audio_source.Stop();//停止播放
+    }
+    
+    //播放3D音效
+    public void audio3DPlay(string url,Vector3 pos,bool isloop = false) {
+        //基础加载过程
+        AudioSource audio_source = null;//它用来接收音效节点的AudioSource组件
+        if(sourceDic.ContainsKey(url))
+        {
+            audio_source = sourceDic[url];
+        }
+        else
+        {
+            GameObject s = new GameObject(url);//创建该clip专用节点
+
+            s.transform.position = pos;//确定节点的位置
+
+            s.transform.parent = sound_source_root.transform;//设置该节点父对象为所有音效节点的根节点——sound_source_root
+            audio_source = s.AddComponent<AudioSource>();//为该节点添加AudioSource组件
+            //音效加载过程
+            AudioClip clip = Resources.Load<AudioClip>("Audio/" + url);//找到并加载对应的clip
+            audio_source.clip = clip;//为该节点的AudioSOurce组件中的AudioClip赋值
+            audio_source.playOnAwake = true;
+            audio_source.spatialBlend = 1.0f;//设置为3D声音
+            sourceDic.Add(url, audio_source);
+        }
+        //音效效果判断过程
+        /* 是否循环
+         * 是否静音
+         * 音量大小
+         * */
+        audio_source.mute = _isMute;
+        audio_source.volume = Volume;
+        audio_source.loop = isloop;
+
+
+        //播放过程
+        
+        audio_source.enabled = true;//激活那些  已经播放完  而关闭的节点
+        audio_source.Play();
+    }
+
+    //停止播放所有音效
+    public void audioStopAll()
+    {
+        foreach(AudioSource audioSource in sourceDic.Values)
+        {
+            audioSource.Stop();
+        }
+    }
+
+
+    //调整音量
+    public void setVolume(float _volume)
+    {
+        Volume = _volume;
+        //为所有节点调整音量
+        foreach (AudioSource audio in sourceDic.Values)
+        {
+            audio.volume = _volume;
+        }
+    }
+
+    //切换静音
+    public void setMute(bool mute)
+    {
+        //切换静音
+        _isMute = mute;
+        //为所有节点切换状态
+        foreach(AudioSource audio in sourceDic.Values)
+        {
+            audio.mute = _isMute;
+        }
+    }
+    //当我的界面的静音按钮要显示的时候，到底是显示关闭，还是开始状态;
+    public static bool sound_is_off()
+    {
+        return _isMute;
+    }
+
+
+    //disable所有未在播放的audiosource
+    public void disable_over_audio()
+    {
+        foreach(AudioSource a in sourceDic.Values)//遍历音效节点
+        {
+            if (!a.isPlaying)//如果没有在播放就关闭它
+            {
+                a.enabled = false;
+            }
+        }
+    }
+    
+    
+ 
+}
